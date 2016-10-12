@@ -43,12 +43,12 @@ proc pumpTcpToWs(req: Request, endpointSocket: AsyncSocket): Future[void] {.asyn
       echo "pumpTcpToWs client socket is fuckd"
       return
 
-proc processClientWebsocket(req: Request, src, dst: Host) {.async.} =
+proc processClientWebsocket(req: Request, src, dst: Host, page: string) {.async.} =
   let (success, error) = await(verifyWebsocketRequest(req, "irc"))
   if not success:
     if req.url.path == "/":
       echo "Deliver TWIRC - Tiny Web IRC Client"
-      asyncCheck req.respond(Http200, readFile("twirc.html") )
+      asyncCheck req.respond(Http200, readFile(page) )
     req.client.close()
   else:
     echo "New websocket customer arrived!"
@@ -66,18 +66,19 @@ proc processClientWebsocket(req: Request, src, dst: Host) {.async.} =
       req.client.close()
       endpointSocket.close()
 
-proc proxy * (src, dst: Host ) =
+proc proxy * (src, dst: Host ,page = "info.html") =
   ## Proxy line by line based protocols between ws://src and tcp://dst
+  ## `page` gets read from the filesystem when connection is not websocket
   var websocketServer = newAsyncHttpServer()
   proc paramHelper(req: Request) {.async.} = 
     try:
-      asyncCheck processClientWebsocket(req, src, dst) 
+      asyncCheck processClientWebsocket(req, src, dst, page) 
     except:
       echo "processClientWebsocket is fuckd"
   asyncCheck websocketServer.serve(src.port, paramHelper)
 
 when isMainModule:
-  # proxy( ("0.0.0.0",Port(7787)), ("127.0.0.1",Port(6667)) )
-  proxy( ("0.0.0.0",Port(7787)), ("irc.freenode.net",Port(6667)) )
+  proxy( ("0.0.0.0",Port(7788)), ("127.0.0.1",Port(6667)) )
+  proxy( ("0.0.0.0",Port(7787)), ("irc.freenode.net",Port(6667)), page = "twirc.html" )
   runForever()
   

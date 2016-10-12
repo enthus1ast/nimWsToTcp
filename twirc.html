@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>TWIRC - Tiny Web IRC Client</title>
+	<style type="text/css">
+		html, body {
+			height: 100%;
+			width: 100%;
+			margin: 0px;
+			padding: 0px;
+		}
+		body {
+			background-color: darkslategrey;
+		}
+		* {
+			box-sizing: border-box;
+		}
+		#messages {
+			position: absolute;
+			top: 45px;
+			left: 0px;
+			bottom: 50px;
+			right: 0px;
+		}
+		legend {
+			color:white;
+		}
+		fieldset {
+			height: 100%;
+			padding: 0px;
+		}
+		#input {
+			position: absolute;
+			top: calc(100% - 50px);
+			left: 0px;
+			bottom: 0px;
+			right: 0px;
+		}
+		#messagesContainer {
+			width: 100%;
+			height: calc(100% - 15px);
+			opacity: 0.8;
+			resize: none;
+		}
+		#prefix {
+			width: 100px;
+		}
+		#message {
+			width: calc(100% - 208px);
+		}
+		#send {
+			width: 100px;
+		}
+	</style>
+</head>
+<body>
+	<div id="options">
+		<fieldset>
+			<legend>Options:</legend>
+			<input id="server" type="text" placeholder="Server.." value="">
+			<input id="user" type="text" placeholder="User.." value="">
+			<input id="nick" type="text" placeholder="Nick.." value="">
+			<button id="connect">connect</button>
+		</fieldset>
+	</div>
+	<div id="messages">
+		<fieldset>
+			<legend>Messages:</legend>
+			<textarea id="messagesContainer" readonly></textarea>
+		</fieldset>
+	</div>
+	<div id="input">
+		<fieldset>
+			<legend>Input:</legend>
+			<input id="prefix" type="text" placeholder="Prefix.." value="privmsg #lobby :">
+			<input id="message" type="text" autofocus>
+			<button id="send">send</button>
+		</fieldset>
+	</div>
+	<script type="text/javascript">
+		var connection = null;
+		var messagesContainer = document.getElementById('messagesContainer')
+		var message = document.getElementById('message')
+		var send = document.getElementById('send')
+		var prefix = document.getElementById('prefix')
+		var server = document.getElementById('server')
+		var user = document.getElementById('user')
+		var nick = document.getElementById('nick')
+		var connect = document.getElementById('connect')
+
+		server.value = window.location.hostname + ':' + window.location.port;
+		user.value = "ws" + (Math.random().toString(36)+'00000000000000000').slice(2, 8+2);
+		nick.value = "ws" + (Math.random().toString(36)+'00000000000000000').slice(2, 8+2); 
+
+
+		connect.onclick = function () {
+			console.log("Connecting to server: " + 'ws://' + server.value );
+			messagesContainer.textContent += "Connecting to server: " + 'ws://' + server.value + '\n';
+			connection = new WebSocket('ws://' + server.value, ['irc'])
+			
+
+			// When the connection is open, send some data to the server
+			connection.onopen = function () {
+				connection.send('USER ' + user.value + ' * * *\n');
+				connection.send('NICK ' + nick.value + '\n');
+				connection.send('PONG :timeoutcheck\n');
+				connection.send('join #klangfragment\n');
+				// connection.send('privmsg #lobby :Gude vom web haha!\n');
+			};
+
+			function sendMessage() {
+					connection.send(prefix.value + message.value + '\n');
+					messagesContainer.textContent += "< " + prefix.value + message.value + '\n';
+					message.value = '';
+					messagesContainer.scrollTop = messagesContainer.scrollHeight;
+			}
+
+			message.onkeyup = function (event) {
+				if ( event.which == 13 ) {
+					sendMessage();
+				}
+			};
+
+			send.onclick = function () {
+				sendMessage();
+			};
+
+			// Log errors
+			connection.onerror = function (error) {
+				console.log('WebSocket Error ' + error);
+			};
+
+			// Log messages from the server
+			connection.onmessage = function (event) {
+				console.log('Server: ' + event.data);
+
+				// handle ping 
+				if (event.data.startsWith("ping")) {
+					var pongReply = "pong" + event.data.slice(4);
+					connection.send(pongReply);
+				}
+				
+				messagesContainer.textContent += "> " + event.data + '\n';
+				messagesContainer.scrollTop = messagesContainer.scrollHeight;
+			};
+		}
+
+	</script>
+</body>
+</html>

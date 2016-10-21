@@ -1,3 +1,12 @@
+#
+#
+#              Websocket to tcp proxy
+#               (c) Copyright 2016 
+#             David Krause, Tobias Freitag
+#
+#    See the file "copying.txt", included in this
+#    distribution, for details about the copyright.
+#
 ## This is an asyn websocket to tcp transport,
 ## Atm this is capable of tunneling a line based protocol (namely IRC)
 ## Everything else is not tested.
@@ -78,7 +87,8 @@ proc proxy * (src, dst: Host ,page = "info.html") =
   asyncCheck websocketServer.serve(src.port, paramHelper)
 
 when isMainModule:
-  proxy( ("0.0.0.0",Port(7788)), ("127.0.0.1",Port(6667)) )
-  proxy( ("0.0.0.0",Port(7787)), ("irc.freenode.net",Port(6667)), page = "twirc.html" )
+  # proxy( ("0.0.0.0",Port(7788)), ("127.0.0.1",Port(6667)), page = "twirc.html" )
+  # proxy( ("0.0.0.0",Port(7787)), ("irc.freenode.net",Port(6667)), page = "twirc.html" )
+  proxy( ("0.0.0.0",Port(7787)), ("127.0.0.1",Port(6667)), page = "twirc.html" )
   runForever()
   

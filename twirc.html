@@ -103,8 +103,8 @@
 			connection.onopen = function () {
 				connection.send('USER ' + user.value + ' * * *\n');
 				connection.send('NICK ' + nick.value + '\n');
-				connection.send('PONG :timeoutcheck\n');
-				connection.send('join #code0\n');
+				// connection.send('PONG :timeoutcheck\n');
+				// connection.send('join #code0\n');
 				// connection.send('privmsg #lobby :Gude vom web haha!\n');
 			};
 
@@ -137,7 +137,7 @@
 				// handle ping 
 				if (event.data.startsWith("PING")) {
 					console.log("send pong reply");
-					var pongReply = "PONG" + event.data.slice(4);
+					var pongReply = "PONG" + event.data.slice(4) + "\n";
 					connection.send(pongReply);
 				}
 				

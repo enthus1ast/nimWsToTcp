@@ -23,6 +23,8 @@ proc pumpWsToTcp(req: Request, endpointSocket: AsyncSocket): Future[void] {.asyn
     try:
       fromWs = await req.client.readData(false)
     except:
+      req.client.close()
+      endpointSocket.close()
       return
     echo "ws: " & fromWs.data
     if fromWs.data == "":

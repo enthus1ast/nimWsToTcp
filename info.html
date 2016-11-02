@@ -1,1 +1,28 @@
-this is an websocket to tcp proxy
+
+<html>
+this is an websocket to tcp proxy <br>
+with intigrated web irc client <br>
+it will connect you to:<br>
+
+<ul>
+  <li><a id="freenode" href="./">freenode</a></li>
+  <li><a id="ch4t" href="./">ch4t.code0.xyz</a> (our own network)</li>
+  <li><a id="localhost" href="http://127.0.0.1:7789">localhost</a>(for testing)</li>
+</ul>
+
+be aware that this is an proxy service. <br>
+Your communication might not be private <br>
+<br>
+To host this by yourself, have a look at the <a href="http://code0.xyz">libch4t</a> project.
+
+
+<script>
+  host = window.location.hostname;
+  freenode = "http://" + host + ":7788";
+  ch4t = "http://" + host + ":7787";
+
+  document.getElementById("freenode").href = freenode;
+  document.getElementById("ch4t").href = ch4t;
+</script>
+
+</html>

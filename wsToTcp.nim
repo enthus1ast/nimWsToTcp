@@ -12,7 +12,18 @@
 ## Everything else is not tested.
 
 
-import asyncnet, asyncdispatch, websocket, asynchttpserver
+import asyncnet, asyncdispatch, websocket
+import asynchttpserver
+import os
+
+const ENABLE_URL_ENCODE = true # if this is enabled the data sent to ws will be "encodeUrl" data that comes back will be "decodeUrl"
+                               # this means that the websocket client has to de- and encode the url as well.
+                               # the server endpoint must not be changed
+                               # http://blog.fgribreau.com/2012/05/how-to-fix-could-not-decode-text-frame.html
+
+const FILTER_UNICODE = true # if this is enabled the data that will be sent to the websocket will be stripped from unwanted unicode chars
+                            # http://blog.fgribreau.com/2012/05/how-to-fix-could-not-decode-text-frame.html
+
 
 type Host = tuple[host: string, port: Port]
 
@@ -58,8 +69,13 @@ proc processClientWebsocket(req: Request, src, dst: Host, page: string) {.async.
   let (success, error) = await(verifyWebsocketRequest(req, "irc"))
   if not success:
     if req.url.path == "/":
-      echo "Deliver TWIRC - Tiny Web IRC Client"
-      asyncCheck req.respond(Http200, readFile(page) )
+      asyncCheck req.respond(Http200, readFile( page / "index.html") )
+    else:  
+      # echo "Deliver static page"
+      let fullPath = page / req.url.path
+      if fullPath.fileExists:
+        asyncCheck req.respond(Http200, readFile(fullPath) )
+      # asyncCheck req.respond(Http200, readFile(page) )
     req.client.close()
   else:
     echo "New websocket customer arrived!"
@@ -89,8 +105,25 @@ proc proxy * (src, dst: Host ,page = "info.html") =
   asyncCheck websocketServer.serve(src.port, paramHelper)
 
 when isMainModule:
-  # proxy( ("0.0.0.0",Port(7788)), ("127.0.0.1",Port(6667)), page = "twirc.html" )
-  # proxy( ("0.0.0.0",Port(7787)), ("irc.freenode.net",Port(6667)), page = "twirc.html" )
-  proxy( ("0.0.0.0",Port(7787)), ("127.0.0.1",Port(6667)), page = "twirc.html" )
+
+  # proxy( ("0.0.0.0",Port(7787)), ("10.0.0.1",Port(6667)), page = "twirc.html" )
+  # proxy( ("0.0.0.0",Port(7788)), ("irc.freenode.net",Port(6667)), page = "twirc.html" )
+  
+  # proxy( ("0.0.0.0",Port(8080)), ("127.0.0.1",Port(6667)), page = "info.html" )
+
+
+  proxy( ("0.0.0.0",Port(7787)), ("10.0.0.1",Port(6667)), page = "c:\\Users\\dkrause\\ch6t\\" )
+  proxy( ("0.0.0.0",Port(7788)), ("irc.freenode.net",Port(6667)), page = "c:\\Users\\dkrause\\ch6t\\" )
+  proxy( ("0.0.0.0",Port(7789)), ("127.0.0.1",Port(6667)), page = "c:\\Users\\dkrause\\ch6t\\" )
+
+
+
+
+  # For the information page
+  var server = newAsyncHttpServer()
+  proc cb(req: Request) {.async.} =
+    await req.respond(Http200, readFile("./info.html"))
+  asyncCheck server.serve(Port(8080), cb)
+
   runForever()
   
